@@ -4,6 +4,9 @@ import xml.etree.ElementTree as ET
 from glob import glob
 from pathlib import Path
 from typing import List
+import logging
+import mojimoji
+import pykakasi
 
 import pandas as pd
 from tqdm import tqdm
@@ -592,3 +595,83 @@ def kss(root_path, meta_file, **kwargs):  # pylint: disable=unused-argument
             text = cols[2]  # cols[1] => 6월, cols[2] => 유월
             items.append({"text": text, "audio_file": wav_file, "speaker_name": speaker_name})
     return items
+
+
+
+
+
+def mecab_list(text, tagger):
+    node = tagger.parseToNode(text)
+    word_class = []
+    while node:
+        word = node.surface
+        wclass = node.feature.split(",")
+        if wclass[0] != "BOS/EOS":
+            if len(wclass) > 7:
+                if wclass[6] == None:
+                    word_class.append((wclass[7]))
+                else:
+                    word_class.append((wclass[7]))
+            else:
+                word_class.append(word)
+        node = node.next
+
+    char_line = " ".join(word_class)
+    return char_line
+
+
+def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None):
+    """JVS dataset v0.92
+
+    URL:
+        https://drive.google.com/open?id=19oAw8wWn3Y7z6CKChRdAyGOB9yupL_Xt
+
+    This corpus consists of Japanese text (transcripts) and multi-speaker voice data. The specification is as follows.
+        - 100 professional speakers
+        - Each speaker utters:
+            - "parallel100" ... 100 reading-style utterances that are common among speakers
+            - "nonpara30" ... 30 reading-style utterances that are completely different among speakers
+            - "whisper10" ... 10 whispered utterances
+            - "falsetto10" ... 10 falsetto utterances
+        - High-quality (studio recording),  high-sampling-rate (24 kHz), and large-sized (30 hours) audio files
+        - Useful tags included (e.g., gender, F0 range, speaker similarity, duration, and phoneme alignment (automatically generated) )
+
+    please reffer https://sites.google.com/site/shinnosuketakamichi/research-topics/jvs_corpus
+    """
+    try:
+        import MeCab
+    except Exception as e:
+        raise RuntimeError("please install MeCab local system and libraries")
+
+    tagger = MeCab.Tagger("-d /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd")
+    tagger.parse("")
+    kks = pykakasi.kakasi()
+
+    file_ext = "wav"
+    items = []
+    meta_files = glob(f"{os.path.join(root_path)}/*/*/*.txt", recursive=True)
+    for meta_file in meta_files:
+        speaker_id, speech_type, trn_file = os.path.relpath(meta_file, root_path).split(os.sep)
+        # ignore speakers
+        if isinstance(ignored_speakers, list):
+            if speaker_id in ignored_speakers:
+                continue
+        with open(meta_file, "r", encoding="utf-8") as file_text:
+            text_list = file_text.readlines()
+        for text in text_list:
+            text = text.rstrip()
+            utt_id, text = text.split(":")
+            text = mojimoji.han_to_zen(text)
+            text = mecab_list(text, tagger)
+            if text == "":
+                continue
+            text = "".join([token["passport"] for token in kks.convert(text)])
+            wav_file = os.path.join(root_path, speaker_id, speech_type, "wav24kHz16bit", utt_id + "." + file_ext)
+            if os.path.exists(wav_file):
+                items.append(
+                    {"text": text, "audio_file": wav_file, "speaker_name": "JVS_" + speaker_id, "root_path": root_path}
+                )
+            else:
+                logging.debug(f" [!] wav files don't exist - {wav_file}")
+    return items
+
