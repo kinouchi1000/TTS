@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import List
 import logging
 import mojimoji
-import pykakasi
-
+from pyopenjtalk import g2p
 import pandas as pd
 from tqdm import tqdm
 
@@ -597,29 +596,6 @@ def kss(root_path, meta_file, **kwargs):  # pylint: disable=unused-argument
     return items
 
 
-
-
-
-def mecab_list(text, tagger):
-    node = tagger.parseToNode(text)
-    word_class = []
-    while node:
-        word = node.surface
-        wclass = node.feature.split(",")
-        if wclass[0] != "BOS/EOS":
-            if len(wclass) > 7:
-                if wclass[6] == None:
-                    word_class.append((wclass[7]))
-                else:
-                    word_class.append((wclass[7]))
-            else:
-                word_class.append(word)
-        node = node.next
-
-    char_line = " ".join(word_class)
-    return char_line
-
-
 def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None):
     """JVS dataset v0.92
 
@@ -638,18 +614,9 @@ def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None)
 
     please reffer https://sites.google.com/site/shinnosuketakamichi/research-topics/jvs_corpus
     """
-    try:
-        import MeCab
-    except Exception as e:
-        raise RuntimeError("please install MeCab local system and libraries")
-
-    tagger = MeCab.Tagger("-d /usr/lib/x86_64-linux-gnu/mecab/dic/mecab-ipadic-neologd")
-    tagger.parse("")
-    kks = pykakasi.kakasi()
-
     file_ext = "wav"
     items = []
-    meta_files = glob(f"{os.path.join(root_path)}/*/*/*.txt", recursive=True)
+    meta_files = glob(str(os.path.join(root_path,'*','*','*.txt')), recursive=True)
     for meta_file in meta_files:
         speaker_id, speech_type, trn_file = os.path.relpath(meta_file, root_path).split(os.sep)
         # ignore speakers
@@ -659,13 +626,13 @@ def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None)
         with open(meta_file, "r", encoding="utf-8") as file_text:
             text_list = file_text.readlines()
         for text in text_list:
+
             text = text.rstrip()
             utt_id, text = text.split(":")
-            text = mojimoji.han_to_zen(text)
-            text = mecab_list(text, tagger)
             if text == "":
                 continue
-            text = "".join([token["passport"] for token in kks.convert(text)])
+            #text = mojimoji.han_to_zen(text)
+            text = g2p(text, kana=True)
             wav_file = os.path.join(root_path, speaker_id, speech_type, "wav24kHz16bit", utt_id + "." + file_ext)
             if os.path.exists(wav_file):
                 items.append(
@@ -674,4 +641,3 @@ def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None)
             else:
                 logging.debug(f" [!] wav files don't exist - {wav_file}")
     return items
-
