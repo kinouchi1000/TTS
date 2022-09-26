@@ -5,10 +5,10 @@ from glob import glob
 from pathlib import Path
 from typing import List
 import logging
-import mojimoji
 from pyopenjtalk import g2p
 import pandas as pd
 from tqdm import tqdm
+import mojimoji
 
 ########################
 # DATASETS
@@ -616,7 +616,7 @@ def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None)
     """
     file_ext = "wav"
     items = []
-    meta_files = glob(str(os.path.join(root_path,'*','*','*.txt')), recursive=True)
+    meta_files = glob(str(os.path.join(root_path, "*", "*", "*.txt")), recursive=True)
     for meta_file in meta_files:
         speaker_id, speech_type, trn_file = os.path.relpath(meta_file, root_path).split(os.sep)
         # ignore speakers
@@ -631,7 +631,7 @@ def jvs(root_path, meta_files=None, wavs_path="", mic="", ignored_speakers=None)
             utt_id, text = text.split(":")
             if text == "":
                 continue
-            #text = mojimoji.han_to_zen(text)
+            # text = mojimoji.han_to_zen(text)
             text = g2p(text, kana=True)
             wav_file = os.path.join(root_path, speaker_id, speech_type, "wav24kHz16bit", utt_id + "." + file_ext)
             if os.path.exists(wav_file):

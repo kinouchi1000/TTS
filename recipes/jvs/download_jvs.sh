@@ -1,3 +1,4 @@
+#!/bin/bash
 S1="19oAw8wWn3Y7z6CKChRdAyGOB9yupL_Xt";
 S2="jvs_ver1.zip";
 
