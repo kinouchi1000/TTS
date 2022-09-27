@@ -19,7 +19,7 @@ from TTS.config.shared_configs import BaseAudioConfig
 import torch
 
 output_path = "exp_yourTTS_vctk_jvs"
-
+d_vector_path = "exp/spekaers.json"
 dataset_config = [
     BaseDatasetConfig(
         formatter="jvs",
@@ -61,11 +61,14 @@ audio_config = BaseAudioConfig(
 
 vitsArgs = VitsArgs(
     use_language_embedding=False,
-    use_speaker_embedding=True,
+    use_speaker_embedding=False,
+    use_d_vector_file=True,
+    d_vector_file=d_vector_path,
+    d_vector_dim=512,
     use_sdp=True,
     num_layers_text_encoder=10,
     inference_noise_scale_dp=0.8,
-    speakers_file="/home/kinouchitakahiro/Documents/fusic/TTS/recipes/jvs/yourTTS/exp/spekaers.json",
+    speakers_file=None,
     speaker_embedding_channels=512,
 )
 
@@ -74,9 +77,8 @@ config = VitsConfig(
     audio=audio_config,
     run_name="yourTTS_jvs_vctk",
     run_description="🐸Coqui trainer run.",
-    use_speaker_embedding=True,
-    batch_size=32,
-    eval_batch_size=32,
+    batch_size=16,
+    eval_batch_size=16,
     batch_group_size=0,
     num_loader_workers=8,
     num_eval_loader_workers=8,
@@ -95,6 +97,8 @@ config = VitsConfig(
     output_path=output_path,
     datasets=dataset_config,
     grad_clip=[5.0, 5.0],
+    min_audio_len=32 * 256 * 4,
+    max_audio_len=160000,
     characters=CharactersConfig(
         characters_class="TTS.tts.models.vits.VitsCharacters",
         pad="_",
@@ -122,13 +126,17 @@ ap = AudioProcessor(**config.audio.to_dict())
 
 tokenizer, tokenizer_config = TTSTokenizer.init_from_config(config)
 
-train_samples, eval_samples = load_tts_samples(dataset_config, eval_split=True)
+train_samples, eval_samples = load_tts_samples(
+    dataset_config,
+    eval_split=True,
+)
 print(len(train_samples))
 print(len(eval_samples))
 
-speaker_manager = SpeakerManager()
+speaker_manager = SpeakerManager(d_vectors_file_path=d_vector_path)
 speaker_manager.set_ids_from_data(train_samples + eval_samples, parse_key="speaker_name")
 config.model_args.num_speakers = speaker_manager.num_speakers
+print(f"speaker number:{speaker_manager.num_speakers}")
 
 model = Vits(config=config, ap=ap, speaker_manager=speaker_manager, tokenizer=tokenizer)
 

@@ -173,3 +173,5 @@ coqui_recipes/*
 jvs_ver1.zip 
 jvs_ver1/
 *.ipynb
+
+exp_*

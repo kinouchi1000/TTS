@@ -3,7 +3,7 @@
 RUN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 echo $RUN_DIR
 # download VCTK dataset
-wget https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip -O VCTK-Corpus-0.92.zip
+axel -o VCTK-Corpus-0.92.zip https://datashare.ed.ac.uk/bitstream/handle/10283/3443/VCTK-Corpus-0.92.zip 
 # extract
 mkdir VCTK
 unzip VCTK-Corpus-0.92 -d VCTK
