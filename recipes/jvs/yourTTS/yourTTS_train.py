@@ -18,7 +18,7 @@ import os
 from TTS.config.shared_configs import BaseAudioConfig
 import torch
 
-output_path = "exp_yourTTS_ja"
+output_path = "exp_yourTTS_vctk_jvs"
 
 dataset_config = [
     BaseDatasetConfig(
@@ -28,8 +28,16 @@ dataset_config = [
         meta_file_val="dev",
         path="../jvs_ver1",
         language="ja",
+        ignored_speakers=["jvs100", "jvs096"],
+    ),
+    BaseDatasetConfig(
+        formatter="vctk",
+        meta_file_train="train",
+        meta_file_val="dev",
+        language="en-us",
         ignored_speakers=None,
-    )
+        path="../../vctk/VCTK/",
+    ),
 ]
 
 audio_config = BaseAudioConfig(
@@ -41,7 +49,7 @@ audio_config = BaseAudioConfig(
     ref_level_db=20,
     log_func="np.log",
     do_trim_silence=False,
-    trim_db=23.0,
+    trim_db=45,
     mel_fmin=0,
     mel_fmax=None,
     spec_gain=1.0,
@@ -54,43 +62,61 @@ audio_config = BaseAudioConfig(
 vitsArgs = VitsArgs(
     use_language_embedding=False,
     use_speaker_embedding=True,
-    use_sdp=False,
+    use_sdp=True,
+    num_layers_text_encoder=10,
+    inference_noise_scale_dp=0.8,
+    speakers_file="/home/kinouchitakahiro/Documents/fusic/TTS/recipes/jvs/yourTTS/exp/spekaers.json",
+    speaker_embedding_channels=512,
 )
 
 config = VitsConfig(
     model_args=vitsArgs,
     audio=audio_config,
-    run_name="vits_mailabs",
+    run_name="yourTTS_jvs_vctk",
+    run_description="🐸Coqui trainer run.",
     use_speaker_embedding=True,
     batch_size=32,
-    eval_batch_size=16,
+    eval_batch_size=32,
     batch_group_size=0,
     num_loader_workers=8,
     num_eval_loader_workers=8,
     run_eval=True,
-    test_delay_epochs=-1,
+    test_delay_epochs=5,
     epochs=1000,
-    text_cleaner="basic_german_cleaners",
+    text_cleaner="multilingual_cleaners",
     use_phonemes=False,
     phoneme_language="jp-ja",
     phoneme_cache_path=os.path.join(output_path, "phoneme_cache"),
     compute_input_seq_cache=True,
     print_step=25,
     use_language_weighted_sampler=False,
-    print_eval=False,
+    print_eval=True,
     mixed_precision=False,
     output_path=output_path,
     datasets=dataset_config,
+    grad_clip=[5.0, 5.0],
     characters=CharactersConfig(
         characters_class="TTS.tts.models.vits.VitsCharacters",
         pad="_",
         eos="&",
         bos="*",
-        characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロワヲンヴ・！，．？−、。「」『』　 ー",
-        punctuations="・！，．？−、。「」『』　 ",
+        characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロワヲンヴ・！，．？ー、。「」『』　!'(),-.:;? ",
+        punctuations="・！，．？ー、。「」『』　!'(),-.:;? ",
         phonemes=None,
         is_unique=True,
     ),
+    test_sentences=[
+        ["マタ、トージノヨーニ、ゴダイミョーオートヨバレル、シュヨーナミョーオーノチューオーニハイサレルコトモオーイ。"],
+        ["ニューイングランドフーワ、ギューニューヲベーストシタ、シロイクリームスープデアリ、ボストンクラムチャウダートモヨバレル。"],
+        ["コンピュータゲームノメーカーヤ、ギョーカイダンタイナドニカンレンスルジンブツノカテゴリ。"],
+        ["サービスマネージャードーニューエキノタメ、オーイマチエキカラ、エンカクカンリシテイル。"],
+        ["シルバーサーファーシューゲキジケンマデニ、リチャーズワ、チームメートトモニ、コクサイテキニスーパーヒーロー、オヨビ、ユーメージントシテ、ニンチサレテイル。"],
+        ["ホッカイドーニイッタラ、ヤッパリ、ウミノコーヲタベナイト、イッタイミガナイデショー。"],
+        ["メサキノリエキダケニトラワレテワイケナイ。"],
+        ["イザカヤデ、ヘンナオッサンニカラマレタ。"],
+        ["テニスニモアルケド、ヨンダイタイカイッテナニ。"],
+        ["トーストニマイト、オレンジジュースヲオネガイシマス。"],
+    ],
 )
 ap = AudioProcessor(**config.audio.to_dict())
 
@@ -121,45 +147,3 @@ trainer = Trainer(
 )
 
 trainer.fit()
-
-"""
-
-dataset_path = "../jvs_ver1"
-dataset_config = [BaseDatasetConfig(formatter="jvs", meta_file_train=None, path=dataset_path, language="ja")]
-
-config = load_config(config_path)
-# confirm json formmat
-config.from_dict(config.to_dict())
-
-# config["characters"]["is_unique"] = False
-config["datasets"] = dataset_config
-config.model_args["d_vector_file"] = speaker_path
-# init model
-model = setup_model(config)  # Vits(config, ap, tokenizer, speaker_manager, language_manager)
-
-
-train_samples, eval_samples = load_tts_samples(
-    config["datasets"],
-    eval_split=True,
-    eval_split_max_size=config.eval_split_max_size,
-    eval_split_size=config.eval_split_size,
-)
-
-# # load parameters
-# cp = torch.load(model_path, map_location=torch.device("cuda"))
-# model_weights = cp["model"].copy()
-
-# # TODO strict Falseでいいのか？
-# model.load_state_dict(model_weights, strict=False)
-# model = model.cuda()
-
-# exit(1)
-
-print("training start")
-# init the trainer and 🚀
-trainer = Trainer(
-    TrainerArgs(), config, output_path, model=model, train_samples=train_samples, eval_samples=eval_samples
-)
-trainer.fit()
-
-"""
