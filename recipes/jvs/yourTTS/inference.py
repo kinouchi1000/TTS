@@ -25,16 +25,16 @@ TTS CLIではYourTTS のVoice ConversionのInferenceの実装がされてなか�
 
 https://github.com/coqui-ai/TTS/issues/1672
 
-e.g. 
+e.g. 20220928時点
 python inference.py \
-    --model_path exp_yourTTS_ja/only_jvs/best_model.pth \
-    --config_path exp_yourTTS_ja/only_jvs/config.json \
-    --SE_config_path download/config_se.json \
+    --model_path exp_yourTTS_vctk_jvs/yourTTS_jvs_vctk-September-28-2022_07+49AM-9ae897d6/best_model.pth \
+    --config_path exp_yourTTS_vctk_jvs/yourTTS_jvs_vctk-September-28-2022_07+49AM-9ae897d6/config.json \
+    --SE_config_path download/config_se.json --SE_model_path download/SE_checkpoint.pth.tar \
     --target_path sample_wav/asano.wav \
     --source_path sample_wav/fukushima.wav \
-    --tts_speaker exp/spekaers.json \
+    --tts_speaker exp/jvs_vctk_speakers.json \
     --output_path ./ \
-    --language ja 
+    --language ja
 """
 
 
@@ -108,11 +108,10 @@ def main():
     target_emb = torch.FloatTensor(target_emb).unsqueeze(0)
 
     driving_emb = SE_speaker_manager.compute_embedding_from_clip(source_path)
-    driving_emb = torch.FloatTensor(target_emb).unsqueeze(0)
+    driving_emb = torch.FloatTensor(driving_emb).unsqueeze(0)
 
     driving_spec, sr = librosa.load(source_path, sr=ap.sample_rate)
     driving_spec = torch.FloatTensor(driving_spec).unsqueeze(0)  # [B, T]
-    print(driving_spec.shape)
 
     if args.use_cuda:
         ref_wav_voc = model.inference_voice_conversion(
@@ -123,9 +122,13 @@ def main():
         ref_wav_voc = model.inference_voice_conversion(
             reference_wav=driving_spec, d_vector=driving_emb, reference_d_vector=target_emb
         )
-        ref_wav_voc = ref_wav_voc.squeeze().detach()
+        ref_wav_voc: torch.Tensor = ref_wav_voc.squeeze().detach()
+    print(ref_wav_voc.shape)
 
-    torchaudio.save(filepath=os.path.join(output_path, "vc_sound.wav"), src=ref_wav_voc)
+    # 音声を保存
+    ref_wav_voc = ref_wav_voc.unsqueeze(0)  # [C, W]
+    print(ref_wav_voc.shape)
+    torchaudio.save(filepath=os.path.join(output_path, "vc_sound.wav"), src=ref_wav_voc, sample_rate=sr)
 
 
 if __name__ == "__main__":

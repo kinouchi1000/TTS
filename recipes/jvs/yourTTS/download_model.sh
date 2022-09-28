@@ -16,10 +16,9 @@ download_path="download"
 mkdir $download_path
 cd $download_path
 
-gdown --id 1nKDMwl-HvsQsKc_in_F8nLLImoFhl4cH -O config.json
-gdown --id 1ASxl9SODWEjkQVM0TtU2Bhz4TmIVxtCz -O best_model.pth.tar
-
-gdown --id  19cDrhZZ0PfKf2Zhr_ebB-QASRw844Tn1 -O config_se.json
-gdown --id   17JsW6h6TIh7-LkU2EvB_gnNrPcdBxt7X -O SE_checkpoint.pth.tar
+gdown --id  1Izs9dWYS1ENwgq4Sok5MCz5fxPF6zgZq -O jvs_vctk_speakers.json
+gdown --id  1ZInyIG-_WUv4eMxLZh-Z_7AGZZG7SxVU -O config_se.json
+gdown --id  1_goS_TYOe_JWn1_rBq01wQAgDPwNFhVu -O SE_checkpoint.pth.tar
+gdown --id  1WPuF-oHREVUi_b3JeWZH8mXBPT9Td9uh -O jvs_spekaers.json
 
 cd ..

@@ -19,7 +19,7 @@ from TTS.config.shared_configs import BaseAudioConfig
 import torch
 
 output_path = "exp_yourTTS_vctk_jvs"
-d_vector_path = "exp/spekaers.json"
+d_vector_path = "exp/jvs_vctk_speakers.json"
 dataset_config = [
     BaseDatasetConfig(
         formatter="jvs",
@@ -32,6 +32,7 @@ dataset_config = [
     ),
     BaseDatasetConfig(
         formatter="vctk",
+        dataset_name="vctk",
         meta_file_train="train",
         meta_file_val="dev",
         language="en-us",
