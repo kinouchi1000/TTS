@@ -19,7 +19,9 @@ from TTS.config.shared_configs import BaseAudioConfig
 import torch
 
 output_path = "exp_yourTTS_vctk_jvs"
-d_vector_path = "exp/jvs_vctk_speakers.json"
+d_vector_path = "exp/jvs_spekaers.json"
+pre_trained_model = "download/best_model.pth.tar"
+
 dataset_config = [
     BaseDatasetConfig(
         formatter="jvs",
@@ -30,15 +32,15 @@ dataset_config = [
         language="ja",
         ignored_speakers=["jvs100", "jvs096"],
     ),
-    BaseDatasetConfig(
-        formatter="vctk",
-        dataset_name="vctk",
-        meta_file_train="train",
-        meta_file_val="dev",
-        language="en-us",
-        ignored_speakers=None,
-        path="../../vctk/VCTK/",
-    ),
+    # BaseDatasetConfig(
+    #     formatter="vctk",
+    #     dataset_name="vctk",
+    #     meta_file_train="train",
+    #     meta_file_val="dev",
+    #     language="en-us",
+    #     ignored_speakers=None,
+    #     path="../../vctk/VCTK/",
+    # ),
 ]
 
 audio_config = BaseAudioConfig(
@@ -76,7 +78,7 @@ vitsArgs = VitsArgs(
 config = VitsConfig(
     model_args=vitsArgs,
     audio=audio_config,
-    run_name="yourTTS_jvs_vctk",
+    run_name="yourTTS_finetuning",
     run_description="🐸Coqui trainer run.",
     batch_size=16,
     eval_batch_size=16,
@@ -141,6 +143,20 @@ print(f"speaker number:{speaker_manager.num_speakers}")
 
 model = Vits(config=config, ap=ap, speaker_manager=speaker_manager, tokenizer=tokenizer)
 
+# for finetuning
+cp = torch.load(pre_trained_model, map_location=torch.device("cpu"))
+# remove speaker encoder
+model_weights = cp["model"].copy()
+for key in list(model_weights.keys()):
+    if "speaker_encoder" in key:
+        del model_weights[key]
+    # text encoderのパラメータ数が変わるので、paramを削除
+    if "text_encoder.emb.weight" in key:
+        del model_weights[key]
+
+# text_encoder.emb.weightが無いって言われるので、strict=Falseに変更
+model.load_state_dict(model_weights, strict=False)
+
 print("training start")
 wandb.init(project="yourTTS-jvs", sync_tensorboard=True)
 
@@ -156,3 +172,6 @@ trainer = Trainer(
 )
 
 trainer.fit()
+
+
+# waveform_decoder.resblocks.11.convs.1.weight_v

@@ -31,7 +31,7 @@ class ResBlock1(torch.nn.Module):
 
     def __init__(self, channels, kernel_size=3, dilation=(1, 3, 5)):
         super().__init__()
-        self.convs1 = nn.ModuleList(
+        self.convs = nn.ModuleList(
             [
                 weight_norm(
                     Conv1d(
@@ -53,32 +53,32 @@ class ResBlock1(torch.nn.Module):
                         padding=get_padding(kernel_size, dilation[1]),
                     )
                 ),
-                weight_norm(
-                    Conv1d(
-                        channels,
-                        channels,
-                        kernel_size,
-                        1,
-                        dilation=dilation[2],
-                        padding=get_padding(kernel_size, dilation[2]),
-                    )
-                ),
+                # weight_norm(
+                #     Conv1d(
+                #         channels,
+                #         channels,
+                #         kernel_size,
+                #         1,
+                #         dilation=dilation[2],
+                #         padding=get_padding(kernel_size, dilation[2]),
+                #     )
+                # ),
             ]
         )
 
-        self.convs2 = nn.ModuleList(
-            [
-                weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-                weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-                weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-            ]
-        )
+        # self.convs2 = nn.ModuleList(
+        #     [
+        #         weight_norm(
+        #             Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
+        #         ),
+        #         weight_norm(
+        #             Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
+        #         ),
+        #         weight_norm(
+        #             Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
+        #         ),
+        #     ]
+        # )
 
     def forward(self, x):
         """
@@ -89,19 +89,20 @@ class ResBlock1(torch.nn.Module):
         Shapes:
             x: [B, C, T]
         """
-        for c1, c2 in zip(self.convs1, self.convs2):
+        # for c1, c2 in zip(self.convs1, self.convs2):
+        for c1 in self.convs:
             xt = F.leaky_relu(x, LRELU_SLOPE)
             xt = c1(xt)
-            xt = F.leaky_relu(xt, LRELU_SLOPE)
-            xt = c2(xt)
+            # xt = F.leaky_relu(xt, LRELU_SLOPE)
+            # xt = c2(xt)
             x = xt + x
         return x
 
     def remove_weight_norm(self):
         for l in self.convs1:
             remove_weight_norm(l)
-        for l in self.convs2:
-            remove_weight_norm(l)
+        # for l in self.convs2:
+        #     remove_weight_norm(l)
 
 
 class ResBlock2(torch.nn.Module):
