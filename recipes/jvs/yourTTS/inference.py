@@ -20,7 +20,7 @@ from TTS.tts.models import setup_model
 from TTS.tts.models.vits import Vits
 
 """
-TTS CLIではYourTTS のVoice ConversionのInferenceの実装がされてなかったので、
+TTS CLIではYourTTS のVoice ConversionのInferenceの実装がされてなかったので、(issueで確認済み)
 スクリプトを組んで実装した。
 
 https://github.com/coqui-ai/TTS/issues/1672

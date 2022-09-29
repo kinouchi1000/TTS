@@ -3,11 +3,19 @@
 ## 1. JVSコーパスのダウンロード
 
 ```bash
-cd ../
+cd /path/to/TTS/recipes/jvs
 bash download_jvs.sh
 ```
 
-## 2. Speaker Embedding model やその他データののダウンロード
+## 2. VCTK コーパスのダウンロード
+
+```bash
+cd /path/to/TTS/recipes/vctk
+bash download_vctk.sh
+```
+
+
+## ３. Speaker Embedding model やその他データののダウンロード
 
 以下のファイルをダウンロードします。`download/` ができて、その中にモデルが格納されます。
 - dataset_config.json
@@ -26,35 +34,33 @@ bash download_jvs.sh
 - SE_checkpoint.pth.tar 
   Speaker Embedding model
   trianingの際に必要
-
 ```bash
 bash download_model.sh
 ```
-
-## 3. d_vector_fileの作成（コーパスの音声特徴量の抽出）
+## 4. d_vector_fileの作成（コーパスの音声特徴量の抽出）
 
 > もし、前のセクションでspeaker.jsonをダウンロードできているなら、飛ばしても大丈夫です。
 > ちなみに、JVSのみのspkear.jsonもダウンロードしているので、適時使ってください。
-
 
 exp/に格納されます。
 ```bash
 bash extract_speaker_feature.sh
 ```
 
-## 4. WandBへのログイン
+## 5. WandBへのログイン
 WandBを使ってログを見れるようにしています。
 
 以下のコマンドを使ってログインして見れるようにしてください
-
 ```bash
 wandb login
 ```
-
-## 5. ModelのTrianing
+## 6. Model Training
+ 
+パラメータなどは `yourTTS_train.py`に記述してあります。
+パラメータ調整は、論文内で一番良かったものにできるだけ合わせています。
 
 `training_yourTTS.py`でパスを修正して実行してください。
 
 ```bash
-python training_yourTTS.py
+    python yourTTS_train.py
 ```
