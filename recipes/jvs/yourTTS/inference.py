@@ -27,8 +27,8 @@ https://github.com/coqui-ai/TTS/issues/1672
 
 e.g. 20220928時点
 python inference.py \
-    --model_path exp_yourTTS_vctk_jvs/yourTTS_jvs_vctk-September-28-2022_07+49AM-9ae897d6/best_model.pth \
-    --config_path exp_yourTTS_vctk_jvs/yourTTS_jvs_vctk-September-28-2022_07+49AM-9ae897d6/config.json \
+    --model_path exp_yourTTS_vctk_jvs/yourTTS_finetuning-September-29-2022_10+34AM-e0a82820/best_model.pth \
+    --config_path exp_yourTTS_vctk_jvs/yourTTS_finetuning-September-29-2022_10+34AM-e0a82820/config.json \
     --SE_config_path download/config_se.json --SE_model_path download/SE_checkpoint.pth.tar \
     --target_path sample_wav/asano.wav \
     --source_path sample_wav/fukushima.wav \
@@ -87,7 +87,7 @@ def main():
     for key in list(model_weights.keys()):
         if "speaker_encoder" in key:
             del model_weights[key]
-    model.load_state_dict(model_weights, strict=False)
+    model.load_state_dict(model_weights)
     model.eval()
 
     # CUDA 設定

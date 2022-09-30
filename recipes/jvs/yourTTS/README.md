@@ -64,3 +64,21 @@ wandb login
 ```bash
     python yourTTS_train.py
 ```
+
+## inference 
+
+以下のコマンドで推論できます。model_pathとconfig_pathは適時変更してください
+
+```bash
+
+python inference.py \
+    --model_path exp_yourTTS_vctk_jvs/yourTTS_finetuning-September-29-2022_10+34AM-e0a82820/best_model.pth \
+    --config_path exp_yourTTS_vctk_jvs/yourTTS_finetuning-September-29-2022_10+34AM-e0a82820/config.json \
+    --SE_config_path download/config_se.json \
+    --SE_model_path download/SE_checkpoint.pth.tar \
+    --target_path sample_wav/asano.wav \
+    --source_path sample_wav/fukushima.wav \
+    --tts_speaker exp/jvs_vctk_speakers.json \
+    --output_path ./ \
+    --language ja
+```
